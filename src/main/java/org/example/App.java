@@ -4,6 +4,7 @@ import org.example.model.Book;
 import org.example.model.Library;
 import org.example.model.Response;
 import org.example.model.Scanning;
+import org.example.strategy.StrategyProcessor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,16 +27,17 @@ import java.util.stream.Collectors;
 public class App {
     public static void main(String[] args) throws IOException {
         List<Path> paths = new ArrayList<>();
-        //paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\f_libraries_of_the_world.txt"));
-        //paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\e_so_many_books.txt"));
-        //paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\d_tough_choices.txt"));
+        paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\f_libraries_of_the_world.txt"));
+        paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\e_so_many_books.txt"));
+        paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\d_tough_choices.txt"));
         paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\c_incunabula.txt"));
-        //paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\b_read_on.txt"));
-        //paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\a_example.txt"));
+        paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\b_read_on.txt"));
+        paths.add(Paths.get("C:\\Users\\taras_yadzhak\\Downloads\\a_example.txt"));
+        StrategyProcessor processor = new StrategyProcessor();
         paths.forEach(path -> {
             try {
-                System.out.println("App::libraryScore");
-                process(path, App::libraryScoreC);
+                //System.out.println("App::libraryScore");
+                process(path, processor);
 
 
                 //System.out.println("App::libraryScoreTest");
@@ -48,37 +50,37 @@ public class App {
         });
     }
 
-    private static void process(Path path, BiFunction<Library, Scanning, Double> libraryScore)
+    private static void process(Path path, StrategyProcessor processor)
             throws IOException {
         List<String> strings = Files.readAllLines(path, StandardCharsets.UTF_8);
 
         Scanning scanning = readScanning(strings);
         Map<Integer, Book> books = collectBooks(strings);
-        List<Library> libraries = collectLibraries(strings, books, scanning, libraryScore);
+        List<Library> libraries = collectLibraries(strings, books, scanning, processor);
 
-        Response response = process(path, scanning, libraries);
-
+        Response response = process(path, scanning, libraries, processor);
         //printOutput(response, path);
-
-
     }
 
-    private static Response process(Path path, Scanning scanning, List<Library> libraries) {
-        List<Library> sortedLibrary = getSortedLibrary2(scanning, libraries);
+    private static Response process(Path path, Scanning scanning, List<Library> libraries, StrategyProcessor processor) {
+        List<Library> sortedLibrary = processor.getSortedLibrary(scanning, libraries);
 
         Response response = new Response();
-        int i = scanning.getTotalDays();
-        int allScore = 0;
+        long i = scanning.getTotalDays();
+        long allScore = 0;
         while (i >= 0) {
 
 
             Library library = sortedLibrary.get(0);
-            if (library.getSignUpDays() > i)
+            if (library.getSignUpDays() > scanning.getDaysLeft()) {
+                library.setScanned(true);
+                sortedLibrary.remove(0);
                 break;
+            }
 
-            int possibleAmountOfBookThatCanBeShipped =
-                    (scanning.getTotalDays() - library.getSignUpDays()) * library
-                            .getBooksShippingPerDay();
+            scanning.setDaysLeft(scanning.getDaysLeft() - library.getSignUpDays());
+            long possibleAmountOfBookThatCanBeShipped =
+                    scanning.getDaysLeft() * library.getBooksShippingPerDay();
 
             List<Book> collect = library.getBooks().stream().filter(Book::isNotScanned)
                     .sorted(Comparator.comparing(Book::getScore).reversed())
@@ -86,12 +88,12 @@ public class App {
 
             boolean addLibrary = false;
             for (int k = 0; k < possibleAmountOfBookThatCanBeShipped; k++) {
-                if (collect.size() <= k)
+                if (collect.isEmpty())
                     break;
 
-                Book book = collect.get(k);
+                Book book = collect.get(0);
                 book.setScanned(true);
-                List<Integer> booksIds = response.getBookIds().get(library.getId());
+                List<Long> booksIds = response.getBookIds().get(library.getId());
                 if (booksIds == null) {
                     booksIds = new ArrayList<>();
 
@@ -101,32 +103,34 @@ public class App {
                 allScore += book.getScore();
                 booksIds.add(book.getId());
                 response.getBookIds().put(library.getId(), booksIds);
-
+                collect.remove(0);
             }
 
             if (addLibrary)
                 response.getLibraryIds().add(library.getId());
 
             i = i - library.getSignUpDays();
+            library.setScanned(true);
             sortedLibrary.remove(0);
-            if (sortedLibrary.isEmpty())
-                break;
+            if (sortedLibrary.isEmpty()) {
+                sortedLibrary = processor.getSortedLibrary(scanning, libraries);
+            }
 
-            calculateLibrariesScore(sortedLibrary, scanning);
-            sortedLibrary = getSortedLibrary2(scanning, sortedLibrary);
+            calculateLibrariesScore(sortedLibrary, scanning, processor);
         }
         System.out.println(path.getFileName() + " all score " + allScore);
         return response;
     }
 
-    private static void calculateLibrariesScore(List<Library> libraries, Scanning s) {
+    private static void calculateLibrariesScore(List<Library> libraries, Scanning s,
+            StrategyProcessor processor) {
         libraries.forEach(library -> {
-            library.setScore(libraryScoreWithBookScoreC(library, s));
+            library.setScore(processor.libraryScoreWithBookScore(library, s));
         });
     }
 
     private static List<Library> collectLibraries(List<String> strings, Map<Integer, Book> books,
-            Scanning scanning, BiFunction<Library, Scanning, Double> libraryScore) {
+            Scanning scanning, StrategyProcessor processor) {
 
         List<Library> libraries = new ArrayList<>();
 
@@ -151,7 +155,7 @@ public class App {
                 library.getBooks().add(book);
             });
 
-            library.setScore(libraryScore.apply(library, scanning));
+            library.setScore(processor.libraryScore(library, scanning));
             libraries.add(library);
             libraryIndex++;
         }
@@ -167,8 +171,8 @@ public class App {
         List<String> lines = new ArrayList<>();
         lines.add(firstLine);
 
-        for (Integer lId : response.getLibraryIds()) {
-            List<Integer> bookIds = response.getBookIds().get(lId);
+        for (long lId : response.getLibraryIds()) {
+            List<Long> bookIds = response.getBookIds().get(lId);
             String libStr = String.format("%d %d", lId, bookIds.size());
             lines.add(libStr);
 
@@ -180,60 +184,6 @@ public class App {
 
         Files.write(file, lines);
 
-    }
-
-    private static double libraryScore(Library l, Scanning s) {
-        return l.getBooksShippingPerDay() * l.getBooksInLibrary() / l.getSignUpDays();
-    }
-
-    private static double libraryScoreC(Library l, Scanning s) {
-        return l.getBooksShippingPerDay() * l.getBooksInLibrary() * (s.getTotalDays() / l.getSignUpDays());
-    }
-
-    private static double libraryScoreWithBookScore(Library l, Scanning s) {
-        int booksScore = 0;
-        int amountOfNotScannedBookInLibrary = 0;
-        for (Book book : l.getBooks()) {
-
-            if (book.isScanned())
-                continue;
-
-            amountOfNotScannedBookInLibrary++;
-            booksScore += book.getScore();
-        }
-
-        return booksScore * ((l.getBooksShippingPerDay() * amountOfNotScannedBookInLibrary) / l
-                .getSignUpDays());
-    }
-
-    private static double libraryScoreWithBookScoreC(Library l, Scanning s) {
-        int booksScore = 0;
-        int amountOfNotScannedBookInLibrary = 0;
-        for (Book book : l.getBooks()) {
-
-            if (book.isScanned())
-                continue;
-
-            amountOfNotScannedBookInLibrary++;
-            booksScore += book.getScore();
-        }
-
-        return /*booksScore **/ ((l.getBooksShippingPerDay() * amountOfNotScannedBookInLibrary) /
-                (l.getSignUpDays()));
-    }
-
-    private static List<Library> getSortedLibrary1(Scanning scanning, List<Library> libraries) {
-        List<Library> collect =
-                libraries.stream().sorted(Comparator.comparing(Library::getSignUpDays))
-                        .collect(Collectors.toList());
-        return collect.isEmpty() ? libraries : collect;
-    }
-
-    private static List<Library> getSortedLibrary2(Scanning scanning, List<Library> libraries) {
-        List<Library> collect =
-                libraries.stream().sorted(Comparator.comparing(Library::getScore).reversed())
-                        .collect(Collectors.toList());
-        return collect.isEmpty() ? libraries : collect;
     }
 
     private static Map<Integer, Book> collectBooks(List<String> strings) {
@@ -255,6 +205,7 @@ public class App {
         scanning.setTotalBooks(Integer.parseInt(scanningStr[0]));
         scanning.setTotalLibrary(Integer.parseInt(scanningStr[1]));
         scanning.setTotalDays(Integer.parseInt(scanningStr[2]));
+        scanning.setDaysLeft(scanning.getTotalDays());
 
         return scanning;
     }

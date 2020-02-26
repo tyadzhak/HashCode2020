@@ -2,31 +2,40 @@ package org.example.model;
 
 public class Scanning {
 
-    private int totalBooks;
-    private int totalLibrary;
-    private int totalDays;
+    private long totalBooks;
+    private long totalLibrary;
+    private long totalDays;
+    private long daysLeft;
 
-    public int getTotalBooks() {
+    public long getTotalBooks() {
         return totalBooks;
     }
 
-    public void setTotalBooks(int totalBooks) {
+    public void setTotalBooks(long totalBooks) {
         this.totalBooks = totalBooks;
     }
 
-    public int getTotalLibrary() {
+    public long getTotalLibrary() {
         return totalLibrary;
     }
 
-    public void setTotalLibrary(int totalLibrary) {
+    public void setTotalLibrary(long totalLibrary) {
         this.totalLibrary = totalLibrary;
     }
 
-    public int getTotalDays() {
+    public long getTotalDays() {
         return totalDays;
     }
 
-    public void setTotalDays(int totalDays) {
+    public void setTotalDays(long totalDays) {
         this.totalDays = totalDays;
+    }
+
+    public long getDaysLeft() {
+        return daysLeft;
+    }
+
+    public void setDaysLeft(long daysLeft) {
+        this.daysLeft = daysLeft;
     }
 }

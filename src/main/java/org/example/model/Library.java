@@ -4,14 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Library {
-    private int id;
-    private int booksInLibrary;
-    private int signUpDays;
-    private int booksShippingPerDay;
+    private long id;
+    private long booksInLibrary;
+    private long signUpDays;
+    private long booksShippingPerDay;
     private List<Book> books;
+    private boolean scanned;
+
     private double score;
 
-    public Library(int id, int booksInLibrary, int signUpDays, int booksShippingPerDay) {
+    public Library(long id, long booksInLibrary, long signUpDays, long booksShippingPerDay) {
         this.id = id;
         this.booksInLibrary = booksInLibrary;
         this.signUpDays = signUpDays;
@@ -20,27 +22,27 @@ public class Library {
         books = new ArrayList<>();
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getSignUpDays() {
+    public long getSignUpDays() {
         return signUpDays;
     }
 
-    public void setSignUpDays(int signUpDays) {
+    public void setSignUpDays(long signUpDays) {
         this.signUpDays = signUpDays;
     }
 
-    public int getBooksShippingPerDay() {
+    public long getBooksShippingPerDay() {
         return booksShippingPerDay;
     }
 
-    public void setBooksShippingPerDay(int booksShippingPerDay) {
+    public void setBooksShippingPerDay(long booksShippingPerDay) {
         this.booksShippingPerDay = booksShippingPerDay;
     }
 
@@ -52,11 +54,11 @@ public class Library {
         this.books = books;
     }
 
-    public int getBooksInLibrary() {
+    public long getBooksInLibrary() {
         return booksInLibrary;
     }
 
-    public void setBooksInLibrary(int booksInLibrary) {
+    public void setBooksInLibrary(long booksInLibrary) {
         this.booksInLibrary = booksInLibrary;
     }
 
@@ -66,5 +68,17 @@ public class Library {
 
     public void setScore(double score) {
         this.score = score;
+    }
+
+    public boolean isScanned() {
+        return scanned;
+    }
+
+    public boolean isNotScanned() {
+        return !isScanned();
+    }
+
+    public void setScanned(boolean scanned){
+        this.scanned = scanned;
     }
 }

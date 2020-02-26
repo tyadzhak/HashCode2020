@@ -7,24 +7,24 @@ import java.util.Map;
 
 public class Response {
 
-    private List<Integer> libraryIds = new ArrayList<>();
+    private List<Long> libraryIds = new ArrayList<>();
 
     //key  library id , value book id
-    private Map<Integer, List<Integer>> bookIds = new HashMap<>();
+    private Map<Long, List<Long>> bookIds = new HashMap<>();
 
-    public List<Integer> getLibraryIds() {
+    public List<Long> getLibraryIds() {
         return libraryIds;
     }
 
-    public void setLibraryIds(List<Integer> libraryIds) {
+    public void setLibraryIds(List<Long> libraryIds) {
         this.libraryIds = libraryIds;
     }
 
-    public Map<Integer, List<Integer>> getBookIds() {
+    public Map<Long, List<Long>> getBookIds() {
         return bookIds;
     }
 
-    public void setBookIds(Map<Integer, List<Integer>> bookIds) {
+    public void setBookIds(Map<Long, List<Long>> bookIds) {
         this.bookIds = bookIds;
     }
 }

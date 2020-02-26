@@ -1,29 +1,29 @@
 package org.example.model;
 
 public class Book {
-    private int id;
-    private int score;
+    private long id;
+    private long score;
     private boolean scanned;
 
-    public Book(int id, int score) {
+    public Book(long id, long score) {
         this.id = id;
         this.score = score;
         scanned = false;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getScore() {
+    public long getScore() {
         return score;
     }
 
-    public void setScore(int score) {
+    public void setScore(long score) {
         this.score = score;
     }
 
